@@ -1,7 +1,7 @@
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, BLACK, WHITE, RED, GREEN
 from player import Player
-from bullet import Bullet
+from bullet import BulletManager
 from centipede import Centipede
 from utils import draw_text
 
@@ -14,11 +14,10 @@ class Game:
         self.game_over = False
         
         # Inicializa el jugador
-        self.player = Player(self.screen_width // 2, self.screen_height - 50, 50, 5, self.screen_width)
+        self.player = Player(self.screen_width // 2, self.screen_height - 50, 30, 5, self.screen_width)
         
-        # Inicializa las balas
-        self.bullet_speed = -7
-        self.bullets = []
+        # Inicializa el administrador de balas
+        self.bullet_manager = BulletManager(bullet_delay=500)
         
         # Inicializa el centipede
         self.centipede = Centipede(10, 20, 3, self.screen_width)
@@ -27,7 +26,7 @@ class Game:
         if not self.game_over:
             self.screen.fill(BLACK)
             self.handle_events()
-            self.move_bullets()
+            self.bullet_manager.update(self.screen_height)
             self.centipede.move()
             self.check_collisions()
             self.draw_objects()
@@ -38,26 +37,15 @@ class Game:
         keys = pygame.key.get_pressed()
         self.player.move(keys)
         if keys[pygame.K_SPACE]:
-            self.fire_bullet()
+            self.bullet_manager.shoot(self.player.rect.centerx - 2.5, self.player.rect.top)
         if keys[pygame.K_ESCAPE]:
             self.game_over = True
 
-    def fire_bullet(self):
-        x = self.player.rect.centerx - 2.5
-        y = self.player.rect.top
-        self.bullets.append(Bullet(x, y, 5, 10, self.bullet_speed))
-
-    def move_bullets(self):
-        for bullet in self.bullets:
-            bullet.move()
-            if bullet.is_off_screen(self.screen_height):
-                self.bullets.remove(bullet)
-
     def check_collisions(self):
-        for bullet in self.bullets:
+        for bullet in self.bullet_manager.bullets:
             for segment in self.centipede.segments:
                 if bullet.rect.colliderect(segment):
-                    self.bullets.remove(bullet)
+                    self.bullet_manager.bullets.remove(bullet)
                     self.centipede.segments.remove(segment)
                     break
         if not self.centipede.segments:
@@ -65,12 +53,9 @@ class Game:
 
     def draw_objects(self):
         self.player.draw(self.screen, GREEN)
-        for bullet in self.bullets:
-            bullet.draw(self.screen, WHITE)
+        self.bullet_manager.draw(self.screen, WHITE)
         self.centipede.draw(self.screen, RED)
 
     def show_game_over(self):
         self.screen.fill(BLACK)
         draw_text('¡Juego Terminado!', self.font, RED, self.screen, self.screen_width // 2, self.screen_height // 2)
-
-  
