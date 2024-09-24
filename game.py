@@ -93,9 +93,17 @@ class Game:
         # Check bullet and mushroom collision
         self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets)
         
-        # Collision between player and spider
-        if self.spider and self.player.rect.colliderect(self.spider.rect):
-            self.game_over = True
+        # Collision with spider
+        if self.spider:
+            # Collision between spider and player
+            if self.spider and self.player.rect.colliderect(self.spider.rect):
+                self.game_over = True
+
+            # Collision between spider and mushroom
+            hit_mushrooms = pygame.sprite.spritecollide(self.spider, self.mushroom_manager.mushrooms, False)
+            if hit_mushrooms:
+                for mushroom in hit_mushrooms:
+                    self.mushroom_manager.mushrooms.remove(mushroom)
 
         # Check if all centipedes are gone
         if len(self.centipedes) == 0:
