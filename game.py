@@ -5,6 +5,8 @@ from bullet import BulletManager
 from centipede import Centipede
 from spider import Spider
 from utils import draw_text
+from mushroom import Mushroom, MushroomManager
+
 import random
 
 class Game:
@@ -28,6 +30,9 @@ class Game:
         self.spider = None
         self.spawn_timer = 0
         self.spawn_interval = random.randint(2000, 5000)
+
+        # Inicializa el administrador de los champiñones
+        self.mushroom_manager = MushroomManager(self.screen_width, self.screen_height, 20, 15)
 
     def run(self):
         if not self.game_over:
@@ -73,6 +78,9 @@ class Game:
                 self.spider = None
                 break
 
+        # Check bullet and mushroom collision
+        self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets)
+        
         # Collision between player and spider
         if self.spider and self.player.rect.colliderect(self.spider.rect):
             self.game_over = True
@@ -87,6 +95,8 @@ class Game:
 
         if self.spider:
             self.spider.draw(self.screen, RED)
+
+        self.mushroom_manager.draw(self.screen, GREEN)
 
     def show_game_over(self):
         self.screen.fill(BLACK)
