@@ -8,7 +8,6 @@ class Player:
         self.speed = speed
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.lives = 3
         self.alive = True  # Marca al jugador como vivo por defecto
         self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
 

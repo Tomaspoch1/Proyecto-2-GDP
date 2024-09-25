@@ -10,9 +10,53 @@ class Menu:
         self.difficulty_font = pygame.font.SysFont(None, 30)
         self.active = True  # Indica si el menú está activo
         self.difficulty = difficulty  # Agrega el atributo de dificultad
+        self.in_instructions = False  # Bandera para saber si está en la pantalla de instrucciones
 
     def run(self):
-        self.screen.fill((0, 0, 0))
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                
+                if self.in_instructions:
+                    self.handle_instructions(event)
+                else:
+                    self.handle_menu(event)
+                    if not self.active:
+                        return self.difficulty[1]
+                        
+                        
+            
+            self.screen.fill((0, 0, 0))
+
+            if self.in_instructions:
+                self.show_instructions()
+            else:
+                self.show_main_menu()
+            
+            pygame.display.flip()
+
+    def handle_menu(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_1:
+                self.active = False # Cambia a la pantalla de juego
+                return
+            elif event.key == pygame.K_2:
+                self.start_difficulty_menu()
+            elif event.key == pygame.K_3:
+                self.in_instructions = True  # Cambia a la pantalla de instrucciones
+            elif event.key == pygame.K_4:
+                pygame.quit()
+                exit()
+
+    def handle_instructions(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                self.in_instructions = False  # Regresa al menú principal
+
+    def show_main_menu(self):
         draw_text('Centipede Game', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 4)
         
         # Dibuja la dificultad en la esquina superior derecha
@@ -24,20 +68,11 @@ class Menu:
         draw_text('3. Instrucciones', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 50)
         draw_text('4. Salir', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 100)
 
-        keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_1]:
-            self.active = False  # Cambia a la pantalla de juego
-            return self.difficulty[1]
-        elif keys[pygame.K_2]:
-            self.start_difficulty_menu()
-        elif keys[pygame.K_3]:
-            self.show_instructions()
-        elif keys[pygame.K_4]:
-            pygame.quit()
-            exit()
-
-        pygame.display.flip()
+    def show_instructions(self):
+        draw_text('Instrucciones del juego', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 4)
+        draw_text('Usa las flechas para mover el jugador', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2)
+        draw_text('Presiona espacio para disparar', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 50)
+        draw_text('Presiona ESC para volver al menú', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 100)
 
     def start_difficulty_menu(self):
         from src.menus.difficulty import DifficultyMenu
@@ -45,15 +80,3 @@ class Menu:
         difficulty_option = difficulty_menu.run()  # Ejecuta el menú de dificultad
         print(difficulty_option)
         self.difficulty = difficulty_option
-
-    def show_instructions(self):
-        self.screen.fill((0, 0, 0))
-        draw_text('Instrucciones del juego', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 4)
-        draw_text('Usa las flechas para mover el jugador', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2)
-        draw_text('Presiona espacio para disparar', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 50)
-        draw_text('Presiona ESC para volver al menú', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 100)
-        
-        keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_ESCAPE]:
-            self.active = True  # Regresa al menú principal

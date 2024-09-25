@@ -16,6 +16,14 @@ class Game:
         self.game_over = False
         self.score = 0  # Inicializa la puntuación en 0
         self.point_messages = []  # Almacena los mensajes de puntos
+        self.lives = 3 #Vidas iniciales del jugador
+        self.death_time_player = 0
+        self.death_time_spider = 0
+        self.death_time_centi = 0
+        self.player_alive = True  # Bandera para saber si el jugador está vivo
+        self.spider_alive = False
+        self.centi_alive = True
+        
         
         # Inicializa el jugador
         self.player = Player(
@@ -28,37 +36,43 @@ class Game:
         # Inicializa el grupo de ciempiés
         self.centipedes = pygame.sprite.Group()
         self.CENTIS_NUMBERS = difficulty
-        CENTI_SPEED = 5
+        self.centi_speed = 5
+        self.centipedes = pygame.sprite.Group()
         for m in range(self.CENTIS_NUMBERS):
             centi = Centi(
-                20 * m, -20, self.screen_width, self.screen_height, CENTI_SPEED
+                20 * m, -20, self.screen_width, self.screen_height, self.centi_speed
             )
             self.centipedes.add(centi)
+        
 
         # Inicializa la araña
         self.spider = None
-        self.spawn_timer = 0
-        self.spawn_interval = random.randint(2000, 5000)
+        self.spawn_interval_spider = random.randint(3000, 5000)
+        
+        #Temporizador de reaparicion centipede
+        self.spawn_time_centi = 5000  # Tiempo de reaparición en milisegundos
 
-        # Temporizador de reaparición
-        self.respawn_time = 1000  # Tiempo de reaparición en milisegundos
-        self.respawn_timer = 0  # Temporizador para el tiempo de reaparición
-        self.player_alive = True  # Para manejar el estado del jugador
-
+        # Temporizador de reaparición jugador
+        self.respawn_time_player = 1000  # Tiempo de reaparición en milisegundos
+        
     def run(self):
         if not self.game_over:
             self.screen.fill(BLACK)
             self.handle_events()
             self.bullet_manager.update(self.screen_height)
-            self.centipedes.update()
             self.check_collisions()
             self.draw_objects()
-            self.spawn_spider()
+            if self.centi_alive:
+                self.centipedes.update()
+            if not self.centi_alive and pygame.time.get_ticks() - self.death_time_centi > self.spawn_time_centi:
+                self.spawn_centipede()
+            if not self.spider_alive and pygame.time.get_ticks() - self.death_time_spider > self.spawn_interval_spider:
+                self.spawn_spider()
             if self.spider:
                 self.spider.move()
             self.draw_score()
             self.update_point_messages()
-            self.handle_respawn()  # Maneja la reaparición del jugador
+            self.handle_respawn()  # Maneja la reaparición del jugador y la araña
         else:
             self.show_game_over()
 
@@ -72,56 +86,55 @@ class Game:
                 )
         if keys[pygame.K_ESCAPE]:
             self.game_over = True
-
-    def spawn_spider(self):
-        if self.spider is None:
-            self.spawn_timer += pygame.time.Clock().tick(60)
-            if self.spawn_timer >= self.spawn_interval:
-                self.spawn_timer = 0
-                self.spider = Spider(self.screen_width, self.screen_height, 30, 2)
-                self.spawn_interval = random.randint(2000, 5000)
-
+                
     def check_collisions(self):
         for bullet in self.bullet_manager.bullets:
-            for segment in self.centipedes:
-                if bullet.rect.colliderect(segment):
-                    self.bullet_manager.bullets.remove(bullet)
-                    self.centipedes.remove(segment)
-                    self.add_points_centipede(segment.rect.center)
-                    break
+            if self.centi_alive:
+                for segment in self.centipedes:
+                    if bullet.rect.colliderect(segment):
+                        self.bullet_manager.bullets.remove(bullet)
+                        self.centipedes.remove(segment)
+                        self.add_points_centipede(segment.rect.center)
+                        if len(self.centipedes) == 0:
+                            self.reset_centipede()
+                        break
+                        
 
             # Collision between bullet and spider
             if self.spider and self.spider.is_hit(bullet):
                 self.bullet_manager.bullets.remove(bullet)
                 spider_center = self.spider.rect.center
                 self.add_points_spider(spider_center)  # Añade puntos al matar una araña
-                self.spider = None
+                self.reset_spider()
                 break
 
         # Collision between player and spider
         if self.spider and self.spider.rect.colliderect(self.player.rect):
-            self.player.lives -= 1  # Resta una vida al jugador
-            if self.player.lives <= 0:
+            self.lives -= 1  # Resta una vida al jugador
+            if self.lives <= 0:
                 self.game_over = True  # Termina el juego si no quedan vidas
             else:
-                self.reset_player()  # Resetea la posición del jugador y la araña
+                self.reset_player()  # Resetea la posición del jugador
+                self.reset_spider()
                 
         # Nueva verificación de colisión entre la nave y los segmentos del centipede
-        for segment in self.centipedes:
-            if self.player.rect.colliderect(segment.rect):
-                self.player.lives -= 1  # Resta una vida al jugador
-                if self.player.lives <= 0:
-                    self.game_over = True  # Termina el juego si no quedan vidas
-                self.centipedes.remove(segment)  # O elimina el segmento que colisionó
-                break
-
-        if not self.centipedes:
-            self.game_over = True  # Termina el juego si el centipede está vacío
+        if self.centi_alive:
+            for segment in self.centipedes:
+                if self.player.rect.colliderect(segment.rect):
+                    self.lives -= 1  # Resta una vida al jugador
+                    if self.lives <= 0:
+                        self.game_over = True  # Termina el juego si no quedan vidas
+                    else:
+                        self.reset_player()  # Resetea la posición del jugador
+                        self.reset_centipede()
+                    break
+                
+        
 
     def add_points_centipede(self, position):
         self.score += 150  # Suma 150 puntos por matar un centipede
         self.point_messages.append((150, list(position)))  # Añade un mensaje en la posición del centipede
-        print(f"Puntos por matar centipede: {self.score}")  # Para depuración
+        #print(f"Puntos por matar centipede: {self.score}")  # Para depuración
 
     def add_points_spider(self, position):
         self.score += 100  # Suma 100 puntos por matar una araña
@@ -129,9 +142,11 @@ class Game:
         print(f"Puntos por matar araña: {self.score}")  # Para depuración
 
     def draw_objects(self):
-        self.player.draw(self.screen, GREEN)
+        if self.player_alive:
+            self.player.draw(self.screen, GREEN)
         self.bullet_manager.draw(self.screen, WHITE)
-        self.centipedes.draw(self.screen)
+        if self.centi_alive:
+            self.centipedes.draw(self.screen)
 
         if self.spider:
             self.spider.draw(self.screen, RED)
@@ -141,33 +156,67 @@ class Game:
     def draw_score(self):
         small_font = pygame.font.SysFont(None, 30)  # Define una fuente más pequeña
         score_text = small_font.render(f"Puntuación: {self.score}", True, WHITE)
-        lives_text = small_font.render(f' Vidas: {self.player.lives}', True, WHITE)
+        lives_text = small_font.render(f' Vidas: {self.lives}', True, WHITE)
         self.screen.blit(score_text, (10, 10))
         self.screen.blit(lives_text, (10 + score_text.get_width() + 10, 10))  # Posición en la pantalla
 
     def update_point_messages(self):
+        small_font = pygame.font.SysFont(None, 20)  # Fuente más pequeña (tamaño 20)
         # Actualiza y dibuja mensajes de puntuación
         for message in self.point_messages[:]:  # Itera sobre una copia para evitar errores al modificar la lista
             points, pos = message
-            message_text = self.font.render(f"+{points}", True, WHITE)
+            message_text = small_font.render(f"+{points}", True, WHITE)
             self.screen.blit(message_text, (pos[0], pos[1]))  # Dibuja el mensaje en la posición del objeto
             pos[1] -= 1  # Mueve el mensaje hacia arriba
             if pos[1] < 0:  # Elimina el mensaje si se ha movido fuera de la pantalla
                 self.point_messages.remove(message)
 
     def reset_player(self):
-        self.player.rect.x = self.screen_width // 2 - self.player.size // 2  # Reinicia la posición del jugador
-        self.player.rect.y = self.screen_height - self.player.size  # Mantenlo en la parte inferior
-        self.spider = None  # Haz que la araña desaparezca
-        pygame.time.set_timer(pygame.USEREVENT, 5000)  # Espera 1 segundo antes de reaparecer
+        self.death_time_player = pygame.time.get_ticks()  # Inicia el temporizador de reaparición
+        self.player_alive = False  # Marca al jugador como no vivo
+                
+    def reset_spider(self):
+        self.death_time_spider = pygame.time.get_ticks()  # Reinicia el temporizador de reaparición        
+        self.spider = None  # Elimina la araña
+        self.spider_alive = False
+        
+    def reset_centipede(self):
+        self.death_time_centi = pygame.time.get_ticks()  # Reinicia el temporizador de reaparición        
+        self.centipedes = None  # Elimina la centipede
+        self.centi_alive = False
 
+    def spawn_centipede(self):
+        # Inicializa el grupo de ciempiés
+        self.centipedes = pygame.sprite.Group()
+        for m in range(self.CENTIS_NUMBERS):
+            centi = Centi(
+                20 * m, -20, self.screen_width, self.screen_height, self.centi_speed
+            )
+            self.centipedes.add(centi)
+        self.centi_alive = True
+        
     def handle_respawn(self):
+        # Maneja la reaparición del jugador
         if not self.player_alive:
-            current_time = pygame.time.get_ticks()
-            if current_time - self.respawn_timer >= self.respawn_time:  # Comprueba si ha pasado el tiempo de reaparición
-                self.player_alive = True  # El jugador reaparece
-                self.reset_player()  # Reinicia al jugador
+            if pygame.time.get_ticks() - self.death_time_player > self.respawn_time_player:
+                self.respawn_player()
 
+        # Maneja la reaparición de la araña
+        if self.spider_alive and self.spider is None:
+            if pygame.time.get_ticks() - self.death_time_spider > self.spawn_interval_spider:
+                self.respawn_player()
+    
+    def respawn_player(self):
+        # Reaparece al jugador después del temporizador
+        self.player = Player(
+            self.screen_width // 2, self.screen_height - 50, 20, 5, self.screen_width, self.screen_height
+        )
+        self.player_alive = True  # Marca al jugador como vivo
+
+    def spawn_spider(self):
+        self.spider = Spider(self.screen_width, self.screen_height, 20, 2)
+        self.spider_alive = True  # Marca a la araña como viva
+        
     def show_game_over(self):
         self.screen.fill(BLACK)
         draw_text('¡Juego Terminado!', self.font, RED, self.screen, self.screen_width // 2, self.screen_height // 2)

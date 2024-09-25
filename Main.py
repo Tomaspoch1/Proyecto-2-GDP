@@ -14,7 +14,7 @@ pygame.display.set_caption("Centipede Game")
 def main():
     clock = pygame.time.Clock()
     menu = Menu(screen, SCREEN_WIDTH, SCREEN_HEIGHT)
-    game = Game(screen, 10)
+    game = None
     
     while True:
         for event in pygame.event.get():
