@@ -2,11 +2,12 @@ import pygame
 from assets.config import SCREEN_WIDTH, SCREEN_HEIGHT, BLACK, WHITE, RED, GREEN
 from src.game.player import Player
 from src.game.bullet import BulletManager
-from src.game.centi import Centi
 from src.game.spider import Spider
+from src.game.centi import Centi  # Asegúrate de que está importando la nueva clase Centi
 from src.utils.utils import draw_text
-import random
+from src.game.mushroom import Mushroom, MushroomManager
 
+import random
 
 class Game:
     def __init__(self, screen, difficulty):
@@ -38,6 +39,9 @@ class Game:
         self.spider = None
         self.spawn_timer = 0
         self.spawn_interval = random.randint(2000, 5000)
+
+        # Inicializa el administrador de los champiñones
+        self.mushroom_manager = MushroomManager(self.screen_width, self.screen_height, 20, 15)
 
     def run(self):
         if not self.game_over:
@@ -73,11 +77,11 @@ class Game:
 
     def check_collisions(self):
         for bullet in self.bullet_manager.bullets:
-            for segment in self.centipedes:
-                if bullet.rect.colliderect(segment):
-                    self.bullet_manager.bullets.remove(bullet)
-                    self.centipedes.remove(segment)
-                    break
+            hit_list = pygame.sprite.spritecollide(bullet, self.centipedes, True)
+            if hit_list:
+                self.bullet_manager.bullets.remove(bullet)
+                if len(self.centipedes) == 0:  # No centipedes left
+                    self.game_over = True
 
             # Collision between bullet and spider
             if self.spider and self.spider.is_hit(bullet):
@@ -85,12 +89,24 @@ class Game:
                 self.spider = None
                 break
 
-        # Collision between player and spider
-        if self.spider and self.player.rect.colliderect(self.spider.rect):
-            self.game_over = True
+        # Check bullet and mushroom collision
+        self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets)
+        
+        # Collision with spider
+        if self.spider:
+            # Collision between spider and player
+            if self.spider and self.player.rect.colliderect(self.spider.rect):
+                self.game_over = True
 
-        if not self.centipedes:
-            self.game_over = True  # Termina el juego si el centipede está vacío
+            # Collision between spider and mushroom
+            hit_mushrooms = pygame.sprite.spritecollide(self.spider, self.mushroom_manager.mushrooms, False)
+            if hit_mushrooms:
+                for mushroom in hit_mushrooms:
+                    self.mushroom_manager.mushrooms.remove(mushroom)
+
+        # Check if all centipedes are gone
+        if len(self.centipedes) == 0:
+            self.game_over = True
 
     def draw_objects(self):
         self.player.draw(self.screen, GREEN)
@@ -100,11 +116,15 @@ class Game:
         if self.spider:
             self.spider.draw(self.screen, RED)
 
+        self.mushroom_manager.draw(self.screen, GREEN)
+
     def show_game_over(self):
         self.screen.fill(BLACK)
-        draw_text('¡Juego Terminado!', self.font, RED, self.screen, self.screen_width // 2, self.screen_height // 2)
-        
-
-
-
-
+        draw_text(
+            "¡Juego Terminado!",
+            self.font,
+            RED,
+            self.screen,
+            self.screen_width // 2,
+            self.screen_height // 2,
+        )
