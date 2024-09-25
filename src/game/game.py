@@ -122,7 +122,7 @@ class Game:
     def show_game_over(self):
         self.screen.fill(BLACK)
         draw_text(
-            "¡Juego Terminado!",
+            "¡Juego Terminado :)!",
             self.font,
             RED,
             self.screen,
