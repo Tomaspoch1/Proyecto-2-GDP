@@ -1,0 +1,110 @@
+import pygame
+from assets.config import SCREEN_WIDTH, SCREEN_HEIGHT, BLACK, WHITE, RED, GREEN
+from src.game.player import Player
+from src.game.bullet import BulletManager
+from src.game.centi import Centi
+from src.game.spider import Spider
+from src.utils.utils import draw_text
+import random
+
+
+class Game:
+    def __init__(self, screen, difficulty):
+        self.screen = screen
+        self.screen_width = SCREEN_WIDTH
+        self.screen_height = SCREEN_HEIGHT
+        self.font = pygame.font.SysFont(None, 55)
+        self.game_over = False
+
+        # Inicializa el jugador
+        self.player = Player(
+            self.screen_width // 2, self.screen_height - 50, 30, 5, self.screen_width
+        )
+
+        # Inicializa el administrador de balas
+        self.bullet_manager = BulletManager(bullet_delay=500)
+
+        # Inicializa el grupo de ciempiés
+        self.centipedes = pygame.sprite.Group()
+        self.CENTIS_NUMBERS = difficulty
+        CENTI_SPEED = 5
+        for m in range(self.CENTIS_NUMBERS):
+            centi = Centi(
+                20 * m, -20, self.screen_width, self.screen_height, CENTI_SPEED
+            )
+            self.centipedes.add(centi)
+
+        # Inicializa la araña
+        self.spider = None
+        self.spawn_timer = 0
+        self.spawn_interval = random.randint(2000, 5000)
+
+    def run(self):
+        if not self.game_over:
+            self.screen.fill(BLACK)
+            self.handle_events()
+            self.bullet_manager.update(self.screen_height)
+            self.centipedes.update()
+            self.check_collisions()
+            self.draw_objects()
+            self.spawn_spider()
+            if self.spider:
+                self.spider.move()
+        else:
+            self.show_game_over()
+
+    def handle_events(self):
+        keys = pygame.key.get_pressed()
+        self.player.move(keys)
+        if keys[pygame.K_SPACE]:
+            self.bullet_manager.shoot(
+                self.player.rect.centerx - 2.5, self.player.rect.top
+            )
+        if keys[pygame.K_ESCAPE]:
+            self.game_over = True
+
+    def spawn_spider(self):
+        if self.spider is None:
+            self.spawn_timer += pygame.time.Clock().tick(60)
+            if self.spawn_timer >= self.spawn_interval:
+                self.spawn_timer = 0
+                self.spider = Spider(self.screen_width, self.screen_height, 30, 2)
+                self.spawn_interval = random.randint(2000, 5000)
+
+    def check_collisions(self):
+        for bullet in self.bullet_manager.bullets:
+            for segment in self.centipedes:
+                if bullet.rect.colliderect(segment):
+                    self.bullet_manager.bullets.remove(bullet)
+                    self.centipedes.remove(segment)
+                    break
+
+            # Collision between bullet and spider
+            if self.spider and self.spider.is_hit(bullet):
+                self.bullet_manager.bullets.remove(bullet)
+                self.spider = None
+                break
+
+        # Collision between player and spider
+        if self.spider and self.player.rect.colliderect(self.spider.rect):
+            self.game_over = True
+
+        if not self.centipedes:
+            self.game_over = True  # Termina el juego si el centipede está vacío
+
+    def draw_objects(self):
+        self.player.draw(self.screen, GREEN)
+        self.bullet_manager.draw(self.screen, WHITE)
+        self.centipedes.draw(self.screen)
+
+        if self.spider:
+            self.spider.draw(self.screen, RED)
+
+    def show_game_over(self):
+        self.screen.fill(BLACK)
+        draw_text('¡Juego Terminado!', self.font, RED, self.screen, self.screen_width // 2, self.screen_height // 2)
+        
+
+
+
+

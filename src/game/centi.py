@@ -9,9 +9,9 @@ class Centi(pygame.sprite.Sprite):
     def __init__(self, x, y, SCREEN_WIDTH, SCREEN_HEIGHT, SPEED):
         pygame.sprite.Sprite.__init__(self)
         self.img_size = (20, 20)
-        self.image = pygame.image.load("centipede1.png")
-        self.gif.append(pygame.image.load("centipede1.png"))
-        self.gif.append(pygame.image.load("centipede2.png"))
+        self.image = pygame.image.load("assets/centipede1.png")
+        self.gif.append(pygame.image.load("assets/centipede1.png"))
+        self.gif.append(pygame.image.load("assets/centipede2.png"))
         transparency_color = self.image.get_at((1, 1))
         self.image.set_colorkey(transparency_color)
         for i in range(2):

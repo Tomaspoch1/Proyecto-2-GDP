@@ -1,8 +1,8 @@
 import pygame
 import sys
-from menu import Menu
-from game import Game
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+from src.menus.menu import Menu
+from src.game.game import Game
+from assets.config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
 # Inicializa pygame
 pygame.init()
@@ -14,7 +14,7 @@ pygame.display.set_caption("Centipede Game")
 def main():
     clock = pygame.time.Clock()
     menu = Menu(screen, SCREEN_WIDTH, SCREEN_HEIGHT)
-    game = Game(screen)
+    game = Game(screen, 10)
     
     while True:
         for event in pygame.event.get():
@@ -24,9 +24,9 @@ def main():
         
         # Si el menú está activo
         if menu.active:
-            menu.run()
+            difficulty = menu.run()
             if not menu.active:  # Si el menú está inactivo, inicializa el juego
-                game = Game(screen)
+                game = Game(screen, difficulty)
         else:
             if game:  # Asegúrate de que el juego se haya inicializado
                 game.run()
