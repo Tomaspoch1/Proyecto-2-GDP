@@ -81,6 +81,7 @@ class Game:
             if hit_list:
                 self.bullet_manager.bullets.remove(bullet)
                 if len(self.centipedes) == 0:  # No centipedes left
+                    print("hola")
                     self.game_over = True
 
             # Collision between bullet and spider
