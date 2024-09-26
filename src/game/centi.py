@@ -9,8 +9,8 @@ else:
     base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Rutas de las imágenes
-image1_path = os.path.join(base_path, "assets", "centipede1.png")
-image2_path = os.path.join(base_path, "assets", "centipede2.png")
+image1_path = os.path.join(base_path, "..", "..", "assets", "centipede1.png")
+image2_path = os.path.join(base_path, "..", "..", "assets", "centipede2.png")
 
 
 class Centi(pygame.sprite.Sprite):
@@ -30,8 +30,8 @@ class Centi(pygame.sprite.Sprite):
         # Configura la transparencia de las imágenes
         transparency_color = self.image.get_at((1, 1))
         self.image.set_colorkey(transparency_color)
-        for i in range(2):
-            self.gif[i].set_colorkey((0, 0, 0))
+        for img in self.gif:
+            img.set_colorkey(transparency_color)
 
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -50,7 +50,7 @@ class Centi(pygame.sprite.Sprite):
             self.image = self.gif[self.gif_counter]
             self.gif_counter += 1
             self.gif_delay = 0
-            if self.gif_counter == 2:
+            if self.gif_counter == len(self.gif):
                 self.gif_counter = 0
         
         # Lógica de movimiento

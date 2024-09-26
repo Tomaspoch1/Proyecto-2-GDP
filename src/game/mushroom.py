@@ -4,7 +4,7 @@ import random
 class Mushroom:
     def __init__(self, x, y, size):
         self.rect = pygame.Rect(x, y, size, size)
-        self.health = 3  # Mushrooms can take a few hits before being destroyed
+        self.health = 2  # Mushrooms can take a few hits before being destroyed
 
     def draw(self, screen, color):
         pygame.draw.rect(screen, color, self.rect)

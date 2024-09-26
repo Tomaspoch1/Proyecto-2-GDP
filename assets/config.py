@@ -1,5 +1,5 @@
 # Constantes de pantalla
-SCREEN_WIDTH = 800
+SCREEN_WIDTH = 350
 SCREEN_HEIGHT = 600
 FPS = 60
 
