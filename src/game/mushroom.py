@@ -9,9 +9,11 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.path.dirname(os.path.abspath(__file__))
     
-image_mashroom1_path = os.path.join(base_path, "..", "..", "assets", "mashroom1.png")  # Carga la imagen del hongo
+image_mashroom1_path = os.path.join(base_path,  "assets", "mashroom1.png")  # Carga la imagen del hongo
 
-image_mashroom2_path = os.path.join(base_path, "..", "..", "assets", "mashroom2.png")  # Carga la imagen del hongo
+image_mashroom2_path = os.path.join(base_path,"assets", "mashroom2.png")  # Carga la imagen del hongo
+
+image_mashroom3_path = os.path.join(base_path, "assets", "mashroom3.png")  # Carga la imagen del hongo
 
 class Mushroom(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -25,15 +27,27 @@ class Mushroom(pygame.sprite.Sprite):
         self.image2 = pygame.image.load(image_mashroom2_path).convert_alpha()
         self.image2 = pygame.transform.scale(self.image2, (20, 20))
         self.rect = self.image2.get_rect(topleft=(x, y))
-        self.health = 2  # Los champiñones pueden recibir algunos golpes antes de ser destruidos
+        
+        #imagen3
+        self.image3 = pygame.image.load(image_mashroom3_path).convert_alpha()
+        self.image3 = pygame.transform.scale(self.image3, (20, 20))
+        self.rect = self.image3.get_rect(topleft=(x, y))
+        
+        self.health = 3  # Los champiñones pueden recibir algunos golpes antes de ser destruidos
+        
+        
 
 
     def draw(self, screen):
-        if self.health == 2:
+        if self.health == 3:
             screen.blit(self.image1, self.rect.topleft)
-        else:
+            
+        elif self.health == 2:
             screen.blit(self.image2, self.rect.topleft)
         
+        else:
+            screen.blit(self.image3, self.rect.topleft)
+            
     def take_damage(self, screen):
         self.health -= 1
         if self.health <= 0:
@@ -58,7 +72,7 @@ class MushroomManager:
             (col * self.mushroom_size, row * self.mushroom_size)
             for row in range(self.rows)
             for col in range(self.cols)
-            if row * self.mushroom_size <= self.min_y and col * self.mushroom_size + self.mushroom_size <= screen_width  # Asegurar que el champiñón no exceda el ancho de la pantalla
+            if row * self.mushroom_size <= self.min_y - 15 and col * self.mushroom_size + self.mushroom_size <= screen_width  # Asegurar que el champiñón no exceda el ancho de la pantalla
         ]
         
         
@@ -90,10 +104,14 @@ class MushroomManager:
                 if mushroom.take_damage(screen):
                     x = mushroom.rect.x
                     y = mushroom.rect.y
+                    position = mushroom.rect.center
                     self.possible_positions.append((x,y))
                     self.mushroom_group.remove(mushroom)  # Eliminar el champiñón si está destruido
+                    bullets.remove(bullet)
+                    return True, position
                 bullets.remove(bullet)  # Eliminar la bala después de la colisión
                 break  # Detener la verificación si la bala golpea un champiñón
+            return None
 
 
     def get_mushroom_group(self):

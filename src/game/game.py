@@ -41,7 +41,7 @@ class Game:
         # Inicializa el grupo de ciempiés
         self.centipedes = pygame.sprite.Group()
         self.CENTIS_NUMBERS = difficulty
-        self.centi_speed = 5
+        self.centi_speed = 7
         self.centipedes = pygame.sprite.Group()
         for m in range(self.CENTIS_NUMBERS):
             centi = Centi(
@@ -119,8 +119,12 @@ class Game:
         
         
         # Check bullet and mushroom collision
-        self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets, self.screen)
+        result = self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets, self.screen)
         
+        if result is not None:  # Solo si hay colisión
+            mushroom_position = result  # Desempaquetar los valores si hay colisión
+            self.add_points_mushroom(mushroom_position[1])  # Sumar puntos y mostrar mensaje
+            
         # Collision with spider with mushrooms
         if self.spider:
             # Collision between spider and mushroom
@@ -163,6 +167,12 @@ class Game:
         self.point_messages.append((100, list(position)))  # Añade un mensaje en la posición de la araña
         print(f"Puntos por matar araña: {self.score}")  # Para depuración
 
+    def add_points_mushroom(self, position):
+        self.score += 50  # Suma 50 puntos por destruir un champiñón
+        self.point_messages.append((50, list(position)))  # Añade un mensaje en la posición del champiñón
+        print(f"Puntos por destruir champiñón: {self.score}")  # Para depuración
+
+    
     def draw_objects(self):
         if self.player_alive:
             self.player.draw(self.screen)
