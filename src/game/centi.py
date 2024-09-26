@@ -18,7 +18,7 @@ class Centi(pygame.sprite.Sprite):
     gif_counter = 0
     gif = []
 
-    def __init__(self, x, y, SCREEN_WIDTH, SCREEN_HEIGHT, SPEED):
+    def __init__(self, x, y, screen_width, screen_height, speed, mushroom_group):
         super().__init__()  # Inicializa el sprite
         self.img_size = (20, 20)
 
@@ -39,9 +39,10 @@ class Centi(pygame.sprite.Sprite):
         self.left_right = 1
         self.up_down = 1
         self.vertical_move = 0
-        self.SCREEN_WIDTH = SCREEN_WIDTH
-        self.SCREEN_HEIGHT = SCREEN_HEIGHT
-        self.SPEED = SPEED
+        self.SCREEN_WIDTH = screen_width
+        self.SCREEN_HEIGHT = screen_height
+        self.SPEED = speed
+        self.mushroom_group = mushroom_group  # Guarda el grupo de champiñones
 
     def update(self):
         # Gif
@@ -77,6 +78,18 @@ class Centi(pygame.sprite.Sprite):
                 if self.rect.y >= self.SCREEN_HEIGHT:
                     self.up_down = 0
 
+        # Verifica colisión con los champiñones
+        if pygame.sprite.spritecollide(self, self.mushroom_group, False):
+            for mushroom in self.mushroom_group:
+                # Comprobación de la colisión exacta en x e y
+                
+                if self.rect.x == mushroom.rect.x -15 and self.rect.y == mushroom.rect.y and self.left_right == 1:
+                    print("(",self.rect.x,self.rect.y,")","(",mushroom.rect.x,mushroom.rect.y,")" )
+                    self.collide()
+
+                if self.rect.x == mushroom.rect.x + 15 and self.rect.y == mushroom.rect.y and self.left_right == 0:
+                    self.collide()
+
     def collide(self):
         self.vertical_move = 2
         if self.left_right == 1:
@@ -91,6 +104,3 @@ class Centi(pygame.sprite.Sprite):
                 self.rect.y += 20
             else:
                 self.rect.y -= 20
-
-    def __str__(self) -> str:
-        return f"X: {self.rect.x} Y: {self.rect.y}"

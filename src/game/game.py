@@ -35,6 +35,9 @@ class Game:
         # Inicializa el administrador de balas
         self.bullet_manager = BulletManager(bullet_delay=500)
 
+        # Inicializa el administrador de los champiñones
+        self.mushroom_manager = MushroomManager(self.screen_width, self.screen_height, 15)
+        
         # Inicializa el grupo de ciempiés
         self.centipedes = pygame.sprite.Group()
         self.CENTIS_NUMBERS = difficulty
@@ -42,7 +45,7 @@ class Game:
         self.centipedes = pygame.sprite.Group()
         for m in range(self.CENTIS_NUMBERS):
             centi = Centi(
-                20 * m, -20, self.screen_width, self.screen_height, self.centi_speed
+                20 * m, -20, self.screen_width, self.screen_height, self.centi_speed, mushroom_group=self.mushroom_manager.get_mushroom_group()
             )
             self.centipedes.add(centi)
         
@@ -54,8 +57,6 @@ class Game:
         #Temporizador de reaparicion centipede
         self.spawn_time_centi = 5000  # Tiempo de reaparición en milisegundos
 
-        # Inicializa el administrador de los champiñones
-        self.mushroom_manager = MushroomManager(self.screen_width, self.screen_height, 20, 15)
 
         # Temporizador de reaparición jugador
         self.respawn_time_player = 1000  # Tiempo de reaparición en milisegundos
@@ -96,15 +97,15 @@ class Game:
         for bullet in self.bullet_manager.bullets:
             if self.centi_alive:
                 for segment in self.centipedes:
-                    if bullet.rect.colliderect(segment):
+                    if bullet.rect.colliderect(segment.rect):
                         self.bullet_manager.bullets.remove(bullet)
                         self.centipedes.remove(segment)
                         self.add_points_centipede(segment.rect.center)
+                        self.mushroom_manager.create_mushrooms(1)
                         if len(self.centipedes) == 0:
                             self.reset_centipede()
                         break
-                        
-
+                    
             # Collision between bullet and spider
             if self.spider and self.spider.is_hit(bullet):
                 self.bullet_manager.bullets.remove(bullet)
@@ -112,17 +113,21 @@ class Game:
                 self.add_points_spider(spider_center)  # Añade puntos al matar una araña
                 self.reset_spider()
                 break
-
-        # Check bullet and mushroom collision
-        self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets)
         
-        # Collision with spider with mashrooms
+        
+        
+        
+        
+        # Check bullet and mushroom collision
+        self.mushroom_manager.check_collision_with_bullets(self.bullet_manager.bullets, self.screen)
+        
+        # Collision with spider with mushrooms
         if self.spider:
             # Collision between spider and mushroom
-            hit_mushrooms = pygame.sprite.spritecollide(self.spider, self.mushroom_manager.mushrooms, False)
+            hit_mushrooms = pygame.sprite.spritecollide(self.spider, self.mushroom_manager.mushroom_group, False)
             if hit_mushrooms:
                 for mushroom in hit_mushrooms:
-                    self.mushroom_manager.mushrooms.remove(mushroom)
+                    self.mushroom_manager.mushroom_group.remove(mushroom)  # Cambia a mushroom_group
 
         # Collision between player and spider
         if self.spider and self.spider.rect.colliderect(self.player.rect):
@@ -144,6 +149,7 @@ class Game:
                         self.reset_player()  # Resetea la posición del jugador
                         self.reset_centipede()
                     break
+
                 
         
 
@@ -159,15 +165,15 @@ class Game:
 
     def draw_objects(self):
         if self.player_alive:
-            self.player.draw(self.screen, GREEN)
+            self.player.draw(self.screen)
         self.bullet_manager.draw(self.screen, WHITE)
         if self.centi_alive:
             self.centipedes.draw(self.screen)
 
         if self.spider:
-            self.spider.draw(self.screen, RED)
+            self.spider.draw(self.screen)
             
-        self.mushroom_manager.draw(self.screen, (0, 0, 255))
+        self.mushroom_manager.draw(self.screen)
             
         self.draw_score()
             
@@ -208,7 +214,7 @@ class Game:
         self.centipedes = pygame.sprite.Group()
         for m in range(self.CENTIS_NUMBERS):
             centi = Centi(
-                20 * m, -20, self.screen_width, self.screen_height, self.centi_speed
+                20 * m, -20, self.screen_width, self.screen_height, self.centi_speed, mushroom_group=self.mushroom_manager.get_mushroom_group()
             )
             self.centipedes.add(centi)
         self.centi_alive = True
