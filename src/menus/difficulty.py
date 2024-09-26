@@ -6,7 +6,7 @@ class DifficultyMenu:
         self.screen = screen
         self.screen_width = screen_width  # Agregado
         self.screen_height = screen_height  # Agregado
-        self.font = pygame.font.Font(None, 48)  # Tamaño de fuente más pequeño
+        self.font = pygame.font.Font(None, 30)  # Tamaño de fuente más pequeño
         self.options = [["Facil", 5], ["Normal", 10], ["Difícil", 15]]
         self.selected_option = 0
         self.active = True
@@ -26,6 +26,8 @@ class DifficultyMenu:
         total_height = len(self.options[0]) * 70  # Altura total considerando margen
         start_y = (self.screen.get_height() - total_height) // 2  # Centrar verticalmente
 
+        level_text = self.font.render("NIVELES", True, (255, 255, 255))
+        
         for i, option in enumerate(self.options):
             color = (255, 0, 0) if i == self.selected_option else (255, 255, 255)
             length = self.get_centipede_length(i)
@@ -35,6 +37,8 @@ class DifficultyMenu:
             # Calcular posición para centrar
             text_rect = rendered_text.get_rect(center=(self.screen.get_width() // 2, start_y + i * 70 + 35))
             self.screen.blit(rendered_text, text_rect)  # Posicionar el texto
+            
+            self.screen.blit(level_text, (self.screen.get_width() // 2 - level_text.get_width() // 2, 150))
 
     def handle_input(self):
         for event in pygame.event.get():

@@ -9,9 +9,9 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.path.dirname(os.path.abspath(__file__))
     
-image_mashroom1_path = os.path.join(base_path,  "assets", "mashroom1.png")  # Carga la imagen del hongo
+image_mashroom1_path = os.path.join(base_path, "assets", "mashroom1.png")  # Carga la imagen del hongo
 
-image_mashroom2_path = os.path.join(base_path,"assets", "mashroom2.png")  # Carga la imagen del hongo
+image_mashroom2_path = os.path.join(base_path, "assets", "mashroom2.png")  # Carga la imagen del hongo
 
 image_mashroom3_path = os.path.join(base_path, "assets", "mashroom3.png")  # Carga la imagen del hongo
 

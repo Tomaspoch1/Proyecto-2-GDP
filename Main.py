@@ -22,19 +22,20 @@ def main():
                 pygame.quit()
                 sys.exit()
         
-        # Si el menú está activo
         if menu.active:
             difficulty = menu.run()
             if not menu.active:  # Si el menú está inactivo, inicializa el juego
                 game = Game(screen, difficulty)
         else:
             if game:  # Asegúrate de que el juego se haya inicializado
-                game.run()
-            else:
-                menu.active = True  # Regresa al menú si el juego no está inicializado
+                game.run()  # Corre el juego
+                if not game.active:  # Si el juego terminó, regresa al menú
+                    game = None  # Reinicia el juego para que el menú se active de nuevo
+                    menu.active = True  # Vuelve a activar el menú
         
         pygame.display.flip()
         clock.tick(FPS)
 
 if __name__ == "__main__":
     main()
+

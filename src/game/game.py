@@ -6,6 +6,9 @@ from src.game.spider import Spider
 from src.game.centi import Centi  # Asegúrate de que está importando la nueva clase Centi
 from src.utils.utils import draw_text
 from src.game.mushroom import Mushroom, MushroomManager
+from src.game.pause_menu import PauseMenu
+
+import sys
 
 import random
 
@@ -16,6 +19,7 @@ class Game:
         self.screen_height = SCREEN_HEIGHT
         self.font = pygame.font.SysFont(None, 55)
         self.game_over = False
+        self.paused = False  # Variable para controlar si el juego está en marcha
         self.score = 0  # Inicializa la puntuación en 0
         self.point_messages = []  # Almacena los mensajes de puntos
         self.lives = 3 #Vidas iniciales del jugador
@@ -25,6 +29,7 @@ class Game:
         self.player_alive = True  # Bandera para saber si el jugador está vivo
         self.spider_alive = False
         self.centi_alive = True
+        self.active = True
         
         
         # Inicializa el jugador
@@ -64,21 +69,25 @@ class Game:
     def run(self):
         if not self.game_over:
             self.screen.fill(BLACK)
-            self.handle_events()
-            self.bullet_manager.update(self.screen_height)
-            self.check_collisions()
-            self.draw_objects()
-            if self.centi_alive:
-                self.centipedes.update()
-            if not self.centi_alive and pygame.time.get_ticks() - self.death_time_centi > self.spawn_time_centi:
-                self.spawn_centipede()
-            if not self.spider_alive and pygame.time.get_ticks() - self.death_time_spider > self.spawn_interval_spider:
-                self.spawn_spider()
-            if self.spider:
-                self.spider.move()
-            self.draw_score()
-            self.update_point_messages()
-            self.handle_respawn()  # Maneja la reaparición del jugador y la araña
+            if self.paused:
+                self.pause_game()  # Muestra la pantalla de pausa
+            else:
+                self.handle_events()
+                self.bullet_manager.update(self.screen_height)
+                self.check_collisions()
+                self.draw_objects()
+                if self.centi_alive:
+                    self.centipedes.update()
+                if not self.centi_alive and pygame.time.get_ticks() - self.death_time_centi > self.spawn_time_centi:
+                    self.spawn_centipede()
+                if not self.spider_alive and pygame.time.get_ticks() - self.death_time_spider > self.spawn_interval_spider:
+                    self.spawn_spider()
+                if self.spider:
+                    self.spider.move()
+                self.draw_score()
+                self.update_point_messages()
+                self.handle_respawn()  # Maneja la reaparición del jugador y la araña
+
         else:
             self.show_game_over()
 
@@ -90,8 +99,18 @@ class Game:
                 self.bullet_manager.shoot(
                     self.player.rect.centerx - 2.5, self.player.rect.top
                 )
-        if keys[pygame.K_ESCAPE]:
-            self.game_over = True
+        if keys[pygame.K_ESCAPE]:  # Presionar ESC para pausar
+            self.paused = True
+            
+            action = self.pause_game()  # Llama al menú de pausa
+            if action == "continuar":
+                self.paused = False            
+            elif action == 'restart':
+                self.restart_game()
+                self.paused = False
+            elif action == 'end':
+                self.game_over = True 
+                
                 
     def check_collisions(self):
         for bullet in self.bullet_manager.bullets:
@@ -153,10 +172,7 @@ class Game:
                         self.reset_player()  # Resetea la posición del jugador
                         self.reset_centipede()
                     break
-
-                
-        
-
+   
     def add_points_centipede(self, position):
         self.score += 150  # Suma 150 puntos por matar un centipede
         self.point_messages.append((150, list(position)))  # Añade un mensaje en la posición del centipede
@@ -171,7 +187,6 @@ class Game:
         self.score += 50  # Suma 50 puntos por destruir un champiñón
         self.point_messages.append((50, list(position)))  # Añade un mensaje en la posición del champiñón
         print(f"Puntos por destruir champiñón: {self.score}")  # Para depuración
-
     
     def draw_objects(self):
         if self.player_alive:
@@ -251,7 +266,49 @@ class Game:
         self.spider = Spider(self.screen_width, self.screen_height, 20, 2)
         self.spider_alive = True  # Marca a la araña como viva
         
+    def pause_game(self):
+        pause_menu = PauseMenu(self.screen)
+        return pause_menu.display()  # Devuelve la acción seleccionada
+
+    def restart_game(self):
+        self.score = 0 
+        self.point_messages = []  # Almacena los mensajes de puntos
+        self.lives = 3 #Vidas iniciales del jugador
+        self.death_time_player = pygame.time.get_ticks()
+        self.death_time_spider = pygame.time.get_ticks()
+        self.death_time_centi = pygame.time.get_ticks() - 2000
+        self.reset_centipede()
+        self.reset_player()
+        self.reset_spider()
+        self.mushroom_manager = MushroomManager(self.screen_width, self.screen_height, 15)
+        
+
     def show_game_over(self):
-        self.screen.fill(BLACK)
-        draw_text('¡Juego Terminado!', self.font, RED, self.screen, self.screen_width // 2, self.screen_height // 2)
-        draw_text(f'Puntuación Final: {self.score}', self.font, WHITE, self.screen, self.screen_width // 2, self.screen_height // 2 + 50)
+        font = pygame.font.SysFont(None, 30)
+        font_title = pygame.font.SysFont(None, 40)
+        
+        self.screen.fill(BLACK)  # Rellena la pantalla con el color negro
+        
+        # Mostrar mensaje de "Juego Terminado"
+        draw_text('¡Juego Terminado!', font_title, RED, self.screen, self.screen_width // 2, self.screen_height  // 4)
+        
+        # Mostrar puntaje final
+        draw_text(f'Puntuación Final: {self.score}', font, WHITE, self.screen, self.screen_width // 2, self.screen_height // 2 )
+        
+        # Mostrar opción para volver al menú principal
+        draw_text('Presiona Enter para volver', font, WHITE, self.screen, self.screen_width // 2, self.screen_height // 2 + 50)
+        
+        draw_text('al Menú Principal', font, WHITE, self.screen, self.screen_width // 2, self.screen_height // 2 + 80)
+        
+        # Manejar entrada del usuario
+               
+        return self.handle_game_over_input()
+        
+    def handle_game_over_input(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:  # Volver al menú principal al presionar Enter
+                    self.active = False# Devuelve a la función principal

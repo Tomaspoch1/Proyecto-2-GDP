@@ -6,8 +6,8 @@ class Menu:
         self.screen = screen
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.font = pygame.font.SysFont(None, 55)
-        self.difficulty_font = pygame.font.SysFont(None, 30)
+        self.font = pygame.font.SysFont(None, 30)  # Tamaño de fuente más pequeño
+        self.difficulty_font = pygame.font.SysFont(None, 30)  # Tamaño de fuente para la dificultad
         self.active = True  # Indica si el menú está activo
         self.difficulty = difficulty  # Agrega el atributo de dificultad
         self.in_instructions = False  # Bandera para saber si está en la pantalla de instrucciones
@@ -27,8 +27,6 @@ class Menu:
                     if not self.active:
                         return self.difficulty[1]
                         
-                        
-            
             self.screen.fill((0, 0, 0))
 
             if self.in_instructions:
@@ -41,7 +39,7 @@ class Menu:
     def handle_menu(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1:
-                self.active = False # Cambia a la pantalla de juego
+                self.active = False  # Cambia a la pantalla de juego
                 return
             elif event.key == pygame.K_2:
                 self.start_difficulty_menu()
@@ -70,9 +68,15 @@ class Menu:
 
     def show_instructions(self):
         draw_text('Instrucciones del juego', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 4)
-        draw_text('Usa las flechas para mover el jugador', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2)
-        draw_text('Presiona espacio para disparar', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 50)
-        draw_text('Presiona ESC para volver al menú', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 100)
+        
+        # Dividir el texto en dos líneas
+        draw_text('Usa las flechas para', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2)
+        draw_text('mover el jugador', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 30)  # Ajustar la posición Y para que esté abajo
+        draw_text('Presiona espacio para disparar', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 80)
+        draw_text('Para pausar el juego presione ESC', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 130)
+        draw_text('Presiona ESC para volver al menú', self.font, (255, 255, 255), self.screen, self.screen_width // 2, self.screen_height // 2 + 180)
+        
+
 
     def start_difficulty_menu(self):
         from src.menus.difficulty import DifficultyMenu
